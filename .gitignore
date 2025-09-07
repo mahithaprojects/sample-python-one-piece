@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+ENV/
+
+# Flask uploads
+static/uploads/*
+
+# OS
+.DS_Store
+Thumbs.db
+
