@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: flask-registration
-          image: mahitha123/flask-registration:v1   # Replace with your Docker Hub username/repo
+          image: mahithadevops/flask-registration:v1   
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
