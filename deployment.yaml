@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-registration-deployment
+  labels:
+    app: flask-registration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-registration
+  template:
+    metadata:
+      labels:
+        app: flask-registration
+    spec:
+      containers:
+        - name: flask-registration
+          image: mahitha123/flask-registration:v1   # Replace with your Docker Hub username/repo
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          env:
+            - name: FLASK_ENV
+              value: "production"
+            - name: PORT
+              value: "5000"
