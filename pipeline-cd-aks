@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "mahithadevops/flask-registration:v1"
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/mahithaprojects/sample-python-one-piece.git'
+            }
+        }
+
+        stage('Deploy to AKS') {
+            steps {
+                echo 'Deploying Flask application to AKS...'
+                sh '''
+                kubectl apply -f deployment.yaml
+                kubectl apply -f service.yaml
+                kubectl rollout status deployment flask-registration-deployment
+                '''
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                echo 'Verifying deployed resources...'
+                sh '''
+                kubectl get pods -o wide
+                kubectl get svc
+                '''
+            }
+        }
+    }
+}
+
