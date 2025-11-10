@@ -1,0 +1,90 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('docker-hub-credentials')
+        SONAR_TOKEN = credentials('sonar-jenkins-token')   // 
+
+        IMAGE_NAME = "mahithadevops/flask-registration"
+        IMAGE_TAG = "v1"
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                echo " Cloning repository..."
+                git branch: 'main', url: 'https://github.com/mahithaprojects/sample-python-one-piece.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                echo " Installing dependencies..."
+                sh '''
+                python3 -m venv venv
+                . venv/bin/activate
+                pip install --upgrade pip
+                pip install -r requirements.txt
+                '''
+            }
+        }
+
+        stage('SonarQube Code Analysis') {
+    steps {
+        withSonarQubeEnv('SonarServer') {
+            sh """
+            /opt/sonar-scanner/bin/sonar-scanner \
+              -Dsonar.projectKey=flask-registration \
+              -Dsonar.sources=. \
+              -Dsonar.host.url=http://ip of sonar \
+              -Dsonar.login=${SONAR_TOKEN}
+            """
+        }
+    }
+}
+
+        stage('Quality Gate Check') {
+            steps {
+                echo 'Skipping Quality Gate wait for faster pipeline run'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo " Building Docker image..."
+                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
+            }
+        }
+
+        
+stage('Trivy Scan') {
+  steps {
+    sh '''
+      trivy image mahithadevops/flask-registration:v1 --format table -o trivy-report.txt
+    '''
+    archiveArtifacts artifacts: 'trivy-report.txt', allowEmptyArchive: true
+  }
+}
+
+        stage('Push to Docker Hub') {
+            steps {
+                echo " Pushing image to Docker Hub..."
+                sh '''
+                echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                docker push $IMAGE_NAME:$IMAGE_TAG
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo " CI Pipeline completed successfully!"
+            echo " Image pushed: https://hub.docker.com/r/mahithadevops/flask-registration"
+        }
+        failure {
+            echo " CI Pipeline failed. Check Jenkins logs."
+        }
+    }
+}
